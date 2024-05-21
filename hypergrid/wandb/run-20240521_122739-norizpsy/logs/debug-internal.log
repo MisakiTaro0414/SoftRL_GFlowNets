@@ -1,0 +1,194 @@
+2024-05-21 12:27:39,887 INFO    StreamThr :2099817 [internal.py:wandb_internal():85] W&B internal server running at pid: 2099817, started at: 2024-05-21 12:27:39.886458
+2024-05-21 12:27:39,890 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: status
+2024-05-21 12:27:39,893 INFO    WriterThread:2099817 [datastore.py:open_for_write():87] open: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/run-norizpsy.wandb
+2024-05-21 12:27:39,896 DEBUG   SenderThread:2099817 [sender.py:send():378] send: header
+2024-05-21 12:27:39,897 DEBUG   SenderThread:2099817 [sender.py:send():378] send: run
+2024-05-21 12:27:40,433 INFO    SenderThread:2099817 [dir_watcher.py:__init__():211] watching files in: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files
+2024-05-21 12:27:40,434 INFO    SenderThread:2099817 [sender.py:_start_run_threads():1123] run started: norizpsy with start time 1716294459.88602
+2024-05-21 12:27:40,453 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: check_version
+2024-05-21 12:27:40,454 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: check_version
+2024-05-21 12:27:40,569 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: run_start
+2024-05-21 12:27:40,588 DEBUG   HandlerThread:2099817 [system_info.py:__init__():26] System info init
+2024-05-21 12:27:40,588 DEBUG   HandlerThread:2099817 [system_info.py:__init__():41] System info init done
+2024-05-21 12:27:40,589 INFO    HandlerThread:2099817 [system_monitor.py:start():194] Starting system monitor
+2024-05-21 12:27:40,589 INFO    SystemMonitor:2099817 [system_monitor.py:_start():158] Starting system asset monitoring threads
+2024-05-21 12:27:40,589 INFO    HandlerThread:2099817 [system_monitor.py:probe():214] Collecting system info
+2024-05-21 12:27:40,590 INFO    SystemMonitor:2099817 [interfaces.py:start():188] Started cpu monitoring
+2024-05-21 12:27:40,591 INFO    SystemMonitor:2099817 [interfaces.py:start():188] Started disk monitoring
+2024-05-21 12:27:40,592 INFO    SystemMonitor:2099817 [interfaces.py:start():188] Started gpu monitoring
+2024-05-21 12:27:40,593 INFO    SystemMonitor:2099817 [interfaces.py:start():188] Started memory monitoring
+2024-05-21 12:27:40,596 INFO    SystemMonitor:2099817 [interfaces.py:start():188] Started network monitoring
+2024-05-21 12:27:40,689 DEBUG   HandlerThread:2099817 [system_info.py:probe():150] Probing system
+2024-05-21 12:27:40,691 DEBUG   HandlerThread:2099817 [system_info.py:_probe_git():135] Probing git
+2024-05-21 12:27:40,700 DEBUG   HandlerThread:2099817 [system_info.py:_probe_git():143] Probing git done
+2024-05-21 12:27:40,700 DEBUG   HandlerThread:2099817 [system_info.py:probe():198] Probing system done
+2024-05-21 12:27:40,700 DEBUG   HandlerThread:2099817 [system_monitor.py:probe():223] {'os': 'Linux-5.4.0-172-generic-x86_64-with-glibc2.31', 'python': '3.10.14', 'heartbeatAt': '2024-05-21T12:27:40.689370', 'startedAt': '2024-05-21T12:27:39.876670', 'docker': None, 'cuda': None, 'args': ('--general', 'experiments/config/general.py:3', '--env', 'experiments/config/hypergrid.py:standard', '--algo', 'experiments/config/algo.py:pcl_ms_dqn', '--env.height', '20', '--env.ndim', '4'), 'state': 'running', 'program': '/home/ayhan/gflownet-rl/hypergrid/run_hypergrid_exp.py', 'codePathLocal': 'run_hypergrid_exp.py', 'codePath': 'hypergrid/run_hypergrid_exp.py', 'git': {'remote': 'https://github.com/d-tiapkin/gflownet-rl.git', 'commit': '434732044ffbadc7d4b585a2e04a1a047297d42c'}, 'email': 'ayhansuleymanzade@kaist.ac.kr', 'root': '/home/ayhan/gflownet-rl', 'host': '22758efff3a7', 'username': 'root', 'executable': '/root/miniconda3/envs/gflownet-rl/bin/python3', 'cpu_count': 52, 'cpu_count_logical': 104, 'cpu_freq': {'current': 1211.930730769231, 'min': 1000.0, 'max': 4000.0}, 'cpu_freq_per_core': [{'current': 1000.028, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.704, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.885, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.407, 'min': 1000.0, 'max': 4000.0}, {'current': 999.999, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.82, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.823, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.185, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.537, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.684, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.258, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.593, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.904, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.385, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.789, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.93, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.625, 'min': 1000.0, 'max': 4000.0}, {'current': 1001.08, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.389, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.839, 'min': 1000.0, 'max': 4000.0}, {'current': 3620.225, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.518, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.465, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.532, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.734, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.599, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.66, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.676, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.157, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.845, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.703, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.621, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.732, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.824, 'min': 1000.0, 'max': 4000.0}, {'current': 3648.631, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.737, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.522, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.668, 'min': 1000.0, 'max': 4000.0}, {'current': 3515.096, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.672, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.787, 'min': 1000.0, 'max': 4000.0}, {'current': 3699.234, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.088, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.854, 'min': 1000.0, 'max': 4000.0}, {'current': 1841.929, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.602, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.627, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.708, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.362, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.602, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.463, 'min': 1000.0, 'max': 4000.0}, {'current': 2680.161, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.434, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.526, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.861, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.845, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.438, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.788, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.644, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.696, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.305, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.513, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.979, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.376, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.642, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.855, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.93, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.801, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.639, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.441, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.667, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.782, 'min': 1000.0, 'max': 4000.0}, {'current': 3088.758, 'min': 1000.0, 'max': 4000.0}, {'current': 1001.021, 'min': 1000.0, 'max': 4000.0}, {'current': 1001.245, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.663, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.192, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.847, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.988, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.056, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.819, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.36, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.267, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.563, 'min': 1000.0, 'max': 4000.0}, {'current': 1001.022, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.448, 'min': 1000.0, 'max': 4000.0}, {'current': 3648.353, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.442, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.831, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.915, 'min': 1000.0, 'max': 4000.0}, {'current': 3469.006, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.87, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.352, 'min': 1000.0, 'max': 4000.0}, {'current': 3650.324, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.873, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.517, 'min': 1000.0, 'max': 4000.0}, {'current': 1835.241, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.866, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.566, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.791, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.431, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.505, 'min': 1000.0, 'max': 4000.0}, {'current': 1000.887, 'min': 1000.0, 'max': 4000.0}, {'current': 2292.075, 'min': 1000.0, 'max': 4000.0}], 'disk': {'/': {'total': 3666.447250366211, 'used': 3144.2820320129395}}, 'gpu': 'NVIDIA GeForce RTX 3090', 'gpu_count': 8, 'gpu_devices': [{'name': 'NVIDIA GeForce RTX 3090', 'memory_total': 25769803776}, {'name': 'NVIDIA GeForce RTX 3090', 'memory_total': 25769803776}, {'name': 'NVIDIA GeForce RTX 3090', 'memory_total': 25769803776}, {'name': 'NVIDIA GeForce RTX 3090', 'memory_total': 25769803776}, {'name': 'NVIDIA GeForce RTX 3090', 'memory_total': 25769803776}, {'name': 'NVIDIA GeForce RTX 3090', 'memory_total': 25769803776}, {'name': 'NVIDIA GeForce RTX 3090', 'memory_total': 25769803776}, {'name': 'NVIDIA GeForce RTX 3090', 'memory_total': 25769803776}], 'memory': {'total': 251.5244483947754}}
+2024-05-21 12:27:40,700 INFO    HandlerThread:2099817 [system_monitor.py:probe():224] Finished collecting system info
+2024-05-21 12:27:40,700 INFO    HandlerThread:2099817 [system_monitor.py:probe():227] Publishing system info
+2024-05-21 12:27:40,700 DEBUG   HandlerThread:2099817 [system_info.py:_save_conda():207] Saving list of conda packages installed into the current environment
+2024-05-21 12:27:41,438 INFO    Thread-12 :2099817 [dir_watcher.py:_on_file_created():271] file/dir created: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/conda-environment.yaml
+2024-05-21 12:27:42,420 DEBUG   HandlerThread:2099817 [system_info.py:_save_conda():222] Saving conda packages done
+2024-05-21 12:27:42,423 INFO    HandlerThread:2099817 [system_monitor.py:probe():229] Finished publishing system info
+2024-05-21 12:27:42,428 DEBUG   SenderThread:2099817 [sender.py:send():378] send: files
+2024-05-21 12:27:42,428 INFO    SenderThread:2099817 [sender.py:_save_file():1389] saving file wandb-metadata.json with policy now
+2024-05-21 12:27:42,436 INFO    Thread-12 :2099817 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/conda-environment.yaml
+2024-05-21 12:27:42,437 INFO    Thread-12 :2099817 [dir_watcher.py:_on_file_created():271] file/dir created: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/wandb-metadata.json
+2024-05-21 12:27:42,503 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: python_packages
+2024-05-21 12:27:42,504 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: python_packages
+2024-05-21 12:27:42,504 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: stop_status
+2024-05-21 12:27:42,505 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: stop_status
+2024-05-21 12:27:42,821 DEBUG   SenderThread:2099817 [sender.py:send():378] send: telemetry
+2024-05-21 12:27:42,822 DEBUG   SenderThread:2099817 [sender.py:send():378] send: config
+2024-05-21 12:27:42,822 DEBUG   SenderThread:2099817 [sender.py:send():378] send: config
+2024-05-21 12:27:42,823 DEBUG   SenderThread:2099817 [sender.py:send():378] send: config
+2024-05-21 12:27:42,823 DEBUG   SenderThread:2099817 [sender.py:send():378] send: telemetry
+2024-05-21 12:27:42,823 DEBUG   SenderThread:2099817 [sender.py:send():378] send: run
+2024-05-21 12:27:43,044 INFO    SenderThread:2099817 [sender.py:send_run():996] updated run: norizpsy
+2024-05-21 12:27:43,379 INFO    wandb-upload_0:2099817 [upload_job.py:push():130] Uploaded file /tmp/tmprebw7fnnwandb/ba82pj7y-wandb-metadata.json
+2024-05-21 12:27:43,437 INFO    Thread-12 :2099817 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/config.yaml
+2024-05-21 12:27:43,437 INFO    Thread-12 :2099817 [dir_watcher.py:_on_file_created():271] file/dir created: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/output.log
+2024-05-21 12:27:43,438 INFO    Thread-12 :2099817 [dir_watcher.py:_on_file_created():271] file/dir created: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/requirements.txt
+2024-05-21 12:27:44,070 DEBUG   SenderThread:2099817 [sender.py:send():378] send: exit
+2024-05-21 12:27:44,070 INFO    SenderThread:2099817 [sender.py:send_exit():585] handling exit code: 1
+2024-05-21 12:27:44,070 INFO    SenderThread:2099817 [sender.py:send_exit():587] handling runtime: 3
+2024-05-21 12:27:44,073 INFO    SenderThread:2099817 [sender.py:_save_file():1389] saving file wandb-summary.json with policy end
+2024-05-21 12:27:44,074 INFO    SenderThread:2099817 [sender.py:send_exit():593] send defer
+2024-05-21 12:27:44,074 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: defer
+2024-05-21 12:27:44,075 INFO    HandlerThread:2099817 [handler.py:handle_request_defer():184] handle defer: 0
+2024-05-21 12:27:44,075 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: defer
+2024-05-21 12:27:44,075 INFO    SenderThread:2099817 [sender.py:send_request_defer():609] handle sender defer: 0
+2024-05-21 12:27:44,075 INFO    SenderThread:2099817 [sender.py:transition_state():613] send defer: 1
+2024-05-21 12:27:44,076 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: defer
+2024-05-21 12:27:44,076 INFO    HandlerThread:2099817 [handler.py:handle_request_defer():184] handle defer: 1
+2024-05-21 12:27:44,076 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: defer
+2024-05-21 12:27:44,076 INFO    SenderThread:2099817 [sender.py:send_request_defer():609] handle sender defer: 1
+2024-05-21 12:27:44,076 INFO    SenderThread:2099817 [sender.py:transition_state():613] send defer: 2
+2024-05-21 12:27:44,077 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: defer
+2024-05-21 12:27:44,077 INFO    HandlerThread:2099817 [handler.py:handle_request_defer():184] handle defer: 2
+2024-05-21 12:27:44,077 INFO    HandlerThread:2099817 [system_monitor.py:finish():203] Stopping system monitor
+2024-05-21 12:27:44,077 DEBUG   SystemMonitor:2099817 [system_monitor.py:_start():172] Starting system metrics aggregation loop
+2024-05-21 12:27:44,079 INFO    HandlerThread:2099817 [interfaces.py:finish():200] Joined cpu monitor
+2024-05-21 12:27:44,079 DEBUG   SystemMonitor:2099817 [system_monitor.py:_start():179] Finished system metrics aggregation loop
+2024-05-21 12:27:44,080 INFO    HandlerThread:2099817 [interfaces.py:finish():200] Joined disk monitor
+2024-05-21 12:27:44,080 DEBUG   SystemMonitor:2099817 [system_monitor.py:_start():183] Publishing last batch of metrics
+2024-05-21 12:27:44,437 INFO    Thread-12 :2099817 [dir_watcher.py:_on_file_created():271] file/dir created: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/wandb-summary.json
+2024-05-21 12:27:44,592 INFO    HandlerThread:2099817 [interfaces.py:finish():200] Joined gpu monitor
+2024-05-21 12:27:44,593 INFO    HandlerThread:2099817 [interfaces.py:finish():200] Joined memory monitor
+2024-05-21 12:27:44,593 INFO    HandlerThread:2099817 [interfaces.py:finish():200] Joined network monitor
+2024-05-21 12:27:44,594 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: defer
+2024-05-21 12:27:44,594 INFO    SenderThread:2099817 [sender.py:send_request_defer():609] handle sender defer: 2
+2024-05-21 12:27:44,594 INFO    SenderThread:2099817 [sender.py:transition_state():613] send defer: 3
+2024-05-21 12:27:44,594 DEBUG   SenderThread:2099817 [sender.py:send():378] send: stats
+2024-05-21 12:27:44,595 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: defer
+2024-05-21 12:27:44,595 INFO    HandlerThread:2099817 [handler.py:handle_request_defer():184] handle defer: 3
+2024-05-21 12:27:44,595 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: defer
+2024-05-21 12:27:44,595 INFO    SenderThread:2099817 [sender.py:send_request_defer():609] handle sender defer: 3
+2024-05-21 12:27:44,595 INFO    SenderThread:2099817 [sender.py:transition_state():613] send defer: 4
+2024-05-21 12:27:44,595 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: defer
+2024-05-21 12:27:44,595 INFO    HandlerThread:2099817 [handler.py:handle_request_defer():184] handle defer: 4
+2024-05-21 12:27:44,596 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: defer
+2024-05-21 12:27:44,596 INFO    SenderThread:2099817 [sender.py:send_request_defer():609] handle sender defer: 4
+2024-05-21 12:27:44,596 INFO    SenderThread:2099817 [sender.py:transition_state():613] send defer: 5
+2024-05-21 12:27:44,596 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: defer
+2024-05-21 12:27:44,596 INFO    HandlerThread:2099817 [handler.py:handle_request_defer():184] handle defer: 5
+2024-05-21 12:27:44,596 DEBUG   SenderThread:2099817 [sender.py:send():378] send: summary
+2024-05-21 12:27:44,597 INFO    SenderThread:2099817 [sender.py:_save_file():1389] saving file wandb-summary.json with policy end
+2024-05-21 12:27:44,597 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: defer
+2024-05-21 12:27:44,597 INFO    SenderThread:2099817 [sender.py:send_request_defer():609] handle sender defer: 5
+2024-05-21 12:27:44,597 INFO    SenderThread:2099817 [sender.py:transition_state():613] send defer: 6
+2024-05-21 12:27:44,597 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: defer
+2024-05-21 12:27:44,597 INFO    HandlerThread:2099817 [handler.py:handle_request_defer():184] handle defer: 6
+2024-05-21 12:27:44,597 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: defer
+2024-05-21 12:27:44,598 INFO    SenderThread:2099817 [sender.py:send_request_defer():609] handle sender defer: 6
+2024-05-21 12:27:44,602 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: status_report
+2024-05-21 12:27:44,826 INFO    SenderThread:2099817 [sender.py:transition_state():613] send defer: 7
+2024-05-21 12:27:44,826 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: defer
+2024-05-21 12:27:44,826 INFO    HandlerThread:2099817 [handler.py:handle_request_defer():184] handle defer: 7
+2024-05-21 12:27:44,827 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: defer
+2024-05-21 12:27:44,827 INFO    SenderThread:2099817 [sender.py:send_request_defer():609] handle sender defer: 7
+2024-05-21 12:27:45,070 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: poll_exit
+2024-05-21 12:27:45,302 INFO    SenderThread:2099817 [sender.py:transition_state():613] send defer: 8
+2024-05-21 12:27:45,303 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: poll_exit
+2024-05-21 12:27:45,303 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: defer
+2024-05-21 12:27:45,303 INFO    HandlerThread:2099817 [handler.py:handle_request_defer():184] handle defer: 8
+2024-05-21 12:27:45,304 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: defer
+2024-05-21 12:27:45,304 INFO    SenderThread:2099817 [sender.py:send_request_defer():609] handle sender defer: 8
+2024-05-21 12:27:45,304 INFO    SenderThread:2099817 [job_builder.py:build():432] Attempting to build job artifact
+2024-05-21 12:27:45,305 INFO    SenderThread:2099817 [job_builder.py:_get_source_type():565] is repo sourced job
+2024-05-21 12:27:45,334 INFO    SenderThread:2099817 [job_builder.py:build():541] adding wandb-job metadata file
+2024-05-21 12:27:45,364 INFO    SenderThread:2099817 [sender.py:transition_state():613] send defer: 9
+2024-05-21 12:27:45,365 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: defer
+2024-05-21 12:27:45,365 DEBUG   SenderThread:2099817 [sender.py:send():378] send: artifact
+2024-05-21 12:27:45,365 INFO    HandlerThread:2099817 [handler.py:handle_request_defer():184] handle defer: 9
+2024-05-21 12:27:45,438 INFO    Thread-12 :2099817 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/wandb-summary.json
+2024-05-21 12:27:45,439 INFO    Thread-12 :2099817 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/output.log
+2024-05-21 12:27:45,439 INFO    Thread-12 :2099817 [dir_watcher.py:_on_file_modified():288] file/dir modified: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/config.yaml
+2024-05-21 12:27:46,071 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: poll_exit
+2024-05-21 12:27:46,415 INFO    SenderThread:2099817 [sender.py:send_artifact():1467] sent artifact job-https___github.com_d-tiapkin_gflownet-rl.git_hypergrid_run_hypergrid_exp.py - {'id': 'QXJ0aWZhY3Q6ODQ0NzI4NTk1', 'state': 'COMMITTED', 'artifactSequence': {'id': 'QXJ0aWZhY3RDb2xsZWN0aW9uOjE3NzUzODM1NQ==', 'latestArtifact': {'id': 'QXJ0aWZhY3Q6ODQ0NzI4NTk1', 'versionIndex': 0}}}
+2024-05-21 12:27:46,415 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: defer
+2024-05-21 12:27:46,415 INFO    SenderThread:2099817 [sender.py:send_request_defer():609] handle sender defer: 9
+2024-05-21 12:27:46,416 INFO    SenderThread:2099817 [dir_watcher.py:finish():358] shutting down directory watcher
+2024-05-21 12:27:46,440 INFO    SenderThread:2099817 [dir_watcher.py:finish():388] scan: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files
+2024-05-21 12:27:46,440 INFO    SenderThread:2099817 [dir_watcher.py:finish():402] scan save: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/config.yaml config.yaml
+2024-05-21 12:27:46,441 INFO    SenderThread:2099817 [dir_watcher.py:finish():402] scan save: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/output.log output.log
+2024-05-21 12:27:46,441 INFO    SenderThread:2099817 [dir_watcher.py:finish():402] scan save: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/wandb-metadata.json wandb-metadata.json
+2024-05-21 12:27:46,442 INFO    SenderThread:2099817 [dir_watcher.py:finish():402] scan save: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/requirements.txt requirements.txt
+2024-05-21 12:27:46,448 INFO    SenderThread:2099817 [dir_watcher.py:finish():402] scan save: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/wandb-summary.json wandb-summary.json
+2024-05-21 12:27:46,454 INFO    SenderThread:2099817 [dir_watcher.py:finish():402] scan save: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/conda-environment.yaml conda-environment.yaml
+2024-05-21 12:27:46,461 INFO    SenderThread:2099817 [sender.py:transition_state():613] send defer: 10
+2024-05-21 12:27:46,466 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: poll_exit
+2024-05-21 12:27:46,467 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: defer
+2024-05-21 12:27:46,468 INFO    HandlerThread:2099817 [handler.py:handle_request_defer():184] handle defer: 10
+2024-05-21 12:27:46,473 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: defer
+2024-05-21 12:27:46,474 INFO    SenderThread:2099817 [sender.py:send_request_defer():609] handle sender defer: 10
+2024-05-21 12:27:46,474 INFO    SenderThread:2099817 [file_pusher.py:finish():169] shutting down file pusher
+2024-05-21 12:27:46,950 INFO    wandb-upload_0:2099817 [upload_job.py:push():130] Uploaded file /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/config.yaml
+2024-05-21 12:27:47,072 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: poll_exit
+2024-05-21 12:27:47,073 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: poll_exit
+2024-05-21 12:27:47,162 INFO    wandb-upload_1:2099817 [upload_job.py:push():130] Uploaded file /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/output.log
+2024-05-21 12:27:47,320 INFO    wandb-upload_4:2099817 [upload_job.py:push():130] Uploaded file /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/conda-environment.yaml
+2024-05-21 12:27:47,323 INFO    wandb-upload_2:2099817 [upload_job.py:push():130] Uploaded file /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/requirements.txt
+2024-05-21 12:27:47,333 INFO    wandb-upload_3:2099817 [upload_job.py:push():130] Uploaded file /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/files/wandb-summary.json
+2024-05-21 12:27:47,533 INFO    Thread-11 (_thread_body):2099817 [sender.py:transition_state():613] send defer: 11
+2024-05-21 12:27:47,534 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: defer
+2024-05-21 12:27:47,534 INFO    HandlerThread:2099817 [handler.py:handle_request_defer():184] handle defer: 11
+2024-05-21 12:27:47,535 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: defer
+2024-05-21 12:27:47,535 INFO    SenderThread:2099817 [sender.py:send_request_defer():609] handle sender defer: 11
+2024-05-21 12:27:47,535 INFO    SenderThread:2099817 [file_pusher.py:join():175] waiting for file pusher
+2024-05-21 12:27:47,536 INFO    SenderThread:2099817 [sender.py:transition_state():613] send defer: 12
+2024-05-21 12:27:47,536 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: defer
+2024-05-21 12:27:47,536 INFO    HandlerThread:2099817 [handler.py:handle_request_defer():184] handle defer: 12
+2024-05-21 12:27:47,537 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: defer
+2024-05-21 12:27:47,537 INFO    SenderThread:2099817 [sender.py:send_request_defer():609] handle sender defer: 12
+2024-05-21 12:27:47,537 INFO    SenderThread:2099817 [file_stream.py:finish():601] file stream finish called
+2024-05-21 12:27:47,750 INFO    SenderThread:2099817 [file_stream.py:finish():605] file stream finish is done
+2024-05-21 12:27:47,750 INFO    SenderThread:2099817 [sender.py:transition_state():613] send defer: 13
+2024-05-21 12:27:47,751 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: defer
+2024-05-21 12:27:47,751 INFO    HandlerThread:2099817 [handler.py:handle_request_defer():184] handle defer: 13
+2024-05-21 12:27:47,751 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: defer
+2024-05-21 12:27:47,752 INFO    SenderThread:2099817 [sender.py:send_request_defer():609] handle sender defer: 13
+2024-05-21 12:27:47,752 INFO    SenderThread:2099817 [sender.py:transition_state():613] send defer: 14
+2024-05-21 12:27:47,752 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: defer
+2024-05-21 12:27:47,753 DEBUG   SenderThread:2099817 [sender.py:send():378] send: final
+2024-05-21 12:27:47,753 INFO    HandlerThread:2099817 [handler.py:handle_request_defer():184] handle defer: 14
+2024-05-21 12:27:47,753 DEBUG   SenderThread:2099817 [sender.py:send():378] send: footer
+2024-05-21 12:27:47,753 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: defer
+2024-05-21 12:27:47,753 INFO    SenderThread:2099817 [sender.py:send_request_defer():609] handle sender defer: 14
+2024-05-21 12:27:47,755 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: poll_exit
+2024-05-21 12:27:47,755 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: poll_exit
+2024-05-21 12:27:47,756 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: poll_exit
+2024-05-21 12:27:47,757 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: poll_exit
+2024-05-21 12:27:47,757 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: server_info
+2024-05-21 12:27:47,758 DEBUG   SenderThread:2099817 [sender.py:send_request():405] send_request: server_info
+2024-05-21 12:27:47,763 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: get_summary
+2024-05-21 12:27:47,764 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: sampled_history
+2024-05-21 12:27:47,765 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: internal_messages
+2024-05-21 12:27:47,962 INFO    MainThread:2099817 [wandb_run.py:_footer_history_summary_info():3994] rendering history
+2024-05-21 12:27:47,962 INFO    MainThread:2099817 [wandb_run.py:_footer_history_summary_info():4026] rendering summary
+2024-05-21 12:27:47,962 INFO    MainThread:2099817 [wandb_run.py:_footer_sync_info():3953] logging synced files
+2024-05-21 12:27:47,963 DEBUG   HandlerThread:2099817 [handler.py:handle_request():158] handle_request: shutdown
+2024-05-21 12:27:47,963 INFO    HandlerThread:2099817 [handler.py:finish():882] shutting down handler
+2024-05-21 12:27:48,758 INFO    WriterThread:2099817 [datastore.py:close():296] close: /home/ayhan/gflownet-rl/hypergrid/wandb/run-20240521_122739-norizpsy/run-norizpsy.wandb
+2024-05-21 12:27:48,962 INFO    SenderThread:2099817 [sender.py:finish():1545] shutting down sender
+2024-05-21 12:27:48,962 INFO    SenderThread:2099817 [file_pusher.py:finish():169] shutting down file pusher
+2024-05-21 12:27:48,962 INFO    SenderThread:2099817 [file_pusher.py:join():175] waiting for file pusher
