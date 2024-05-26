@@ -23,6 +23,7 @@ from experiments.train_sac import train_sac
 from experiments.train_uniform import train_uniform
 from experiments.train_perfect import train_perfect
 from experiments.train_baseline import train_baseline
+from experiments.train_learnable_dqn import train_learnable_dqn
 from experiments.train_lambdadqn import train_lambdadqn
 from experiments.train_pcldqn import train_pcldqn
 from experiments.train_pcl_ms_dqn import train_pcl_ms_dqn
@@ -39,6 +40,7 @@ train_fns = {
     'SoftDQN': train_softdqn,
     'SAC': train_sac,
     'LambdaDQN': train_lambdadqn,
+    'LearnableDQN': train_learnable_dqn,
     'PCLDQN': train_pcldqn,
     'PCL_MS_DQN': train_pcl_ms_dqn,
     # Baselines
@@ -72,9 +74,9 @@ def main(_):
         raise ValueError("Seed should be >0!")
 
     seed = general_args.seed
-    is_cuda = general_args.device == 'cuda:2'
-    print("Is CUDA:", is_cuda)
-    set_seed(seed, is_cuda=is_cuda)
+    # is_cuda = general_args.device == 'cuda:2'
+    # print("Is CUDA:", is_cuda)
+    set_seed(seed, is_cuda=True)
 
     use_wandb = len(general_args.wandb_project) > 0
     # use_wandb = False 
@@ -84,7 +86,7 @@ def main(_):
         wandb.config.update(env_args, allow_val_change=True)
         wandb.config.update(algo_args, allow_val_change=True)
     
-        wandb.run.name = f"{algo_args.name}_tau={algo_args.tau}_lr={algo_args.learning_rate}_{general_args.n_envs}samples_{seed}_env={env_args.reward_type}_{env_args.ndim}_{env_args.height}"
+        wandb.run.name = f"{algo_args.name}_height={env_args.height}_lr={algo_args.learning_rate}_{general_args.n_envs}samples_{seed}_env={env_args.reward_type}"
 
     env = HyperGrid(
         env_args.ndim, env_args.height,

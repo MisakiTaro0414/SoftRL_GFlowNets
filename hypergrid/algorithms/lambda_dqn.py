@@ -155,7 +155,7 @@ class LambdaDQNGFlowNet(GFlowNet):
         valid_transitions_log_rewards = transitions.log_rewards[
             ~transitions.states.is_sink_state
         ]
-        targets[valid_transitions_is_done] = valid_transitions_log_rewards[
+        targets[valid_transitions_is_done] =  entropy_coeff * valid_transitions_log_rewards[
             valid_transitions_is_done
         ]
 

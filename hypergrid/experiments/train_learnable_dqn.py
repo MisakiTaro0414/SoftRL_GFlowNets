@@ -7,21 +7,18 @@ except ModuleNotFoundError:
 from tqdm import tqdm, trange
 
 
-from algorithms import LambdaDQNGFlowNet, TorchRLReplayBuffer
-from torchtyping import TensorType as TT
-from algorithms.model import DiscretePolicyEstimator
+from algorithms import LearnableDQNGFlowNet, TorchRLReplayBuffer
+
+from gfn.modules import DiscretePolicyEstimator
 from experiments.utils import validate
 from gfn.utils.modules import NeuralNet, DiscreteUniform
 from gfn.env import Env
-from collections import Counter
-from typing import Dict, Optional
 
-from gfn.gflownet import GFlowNet
-from gfn.states import States
+
 from ml_collections.config_dict import ConfigDict
 
 
-def train_lambdadqn(
+def train_learnable_dqn(
         env: Env,
         experiment_name: str,
         general_config: ConfigDict,
@@ -53,7 +50,7 @@ def train_lambdadqn(
     use_wandb = len(general_config.wandb_project) > 0
     # use_wandb = False
     pf_module = NeuralNet(
-        input_dim=env.preprocessor.output_dim + 1,
+        input_dim=env.preprocessor.output_dim,
         output_dim=env.n_actions,
         hidden_dim=algo_config.net.hidden_dim,
         n_hidden_layers=algo_config.net.n_hidden,
@@ -64,7 +61,7 @@ def train_lambdadqn(
         pb_module = DiscreteUniform(env.n_actions - 1)
     else:
         pb_module = NeuralNet(
-            input_dim=env.preprocessor.output_dim + 1,
+            input_dim=env.preprocessor.output_dim,
             output_dim=env.n_actions - 1,
             hidden_dim=algo_config.net.hidden_dim,
             n_hidden_layers=algo_config.net.n_hidden,
@@ -80,7 +77,7 @@ def train_lambdadqn(
     pb_estimator.to(env.device)
 
     pf_target = NeuralNet(
-        input_dim=env.preprocessor.output_dim + 1,
+        input_dim=env.preprocessor.output_dim,
         output_dim=env.n_actions,
         hidden_dim=algo_config.net.hidden_dim,
         n_hidden_layers=algo_config.net.n_hidden,
@@ -93,13 +90,25 @@ def train_lambdadqn(
 
     replay_buffer_size = algo_config.replay_buffer.replay_buffer_size
 
-    # sample from 0-1 for entropy coefficient from normal distribution
-    gflownet = LambdaDQNGFlowNet(
+    entropy_coeff_net = NeuralNet(
+        input_dim=env.n_actions,
+        output_dim=1,
+        hidden_dim=algo_config.net.hidden_dim,
+        n_hidden_layers=algo_config.net.n_hidden,
+
+    )
+
+    entropy_coeff_net.to(env.device)
+
+    # entropy_coeff = 1/(1 - algo_config.munchausen.alpha)  # to make (1-alpha)*tau=1
+    gflownet = LearnableDQNGFlowNet(
         q=pf_estimator,
         q_target=pf_target_estimator,
         pb=pb_estimator,
+        entropy_net=entropy_coeff_net,
         on_policy=True if replay_buffer_size == 0 else False,
         is_double=algo_config.is_double,
+        # entropy_coeff=entropy_coeff,
         munchausen_alpha=algo_config.munchausen.alpha,
         munchausen_l0=algo_config.munchausen.l0
     )
@@ -145,32 +154,16 @@ def train_lambdadqn(
 
     # Train loop
     n_iterations = general_config.n_trajectories // general_config.n_envs
-    # make entropy_coeff a learnable parameter based on Q(s,a)
-    # entropy_coeff = torch.nn.Parameter(torch.tensor(1.0))
-    entropy_coeff_net = NeuralNet(
-        input_dim=env.preprocessor.output_dim,
-        output_dim=1,
-        hidden_dim=algo_config.net.hidden_dim,
-        n_hidden_layers=algo_config.net.n_hidden,
-    )
-
-    entropy_coeff_net.to(env.device)
-
     for iteration in trange(n_iterations):
         progress = float(iteration) / n_iterations
-        # entropy_coeff = torch.distributions.Uniform(0, 2).sample() 
-    
-        # entropy_coeff = torch.distributions.Normal(1, 0.3).sample()
-        trajectories = gflownet.sample_trajectories(n_samples=general_config.n_envs, entropy_coeff=1.0)
+        trajectories = gflownet.sample_trajectories(n_samples=general_config.n_envs)
         training_samples = gflownet.to_training_samples(trajectories)
-
-
 
         if replay_buffer is not None:
             with torch.no_grad():
                 # For priortized RB
                 if replay_buffer.prioritized:
-                    scores = gflownet.get_scores(training_samples, entropy_coeff_net)
+                    scores = gflownet.get_scores(training_samples)
                     td_error = loss_fn(scores, torch.zeros_like(scores))
                     replay_buffer.add(training_samples, td_error)
                     # Annealing of beta
@@ -180,10 +173,10 @@ def train_lambdadqn(
 
             if iteration > algo_config.learning_starts:
                 training_objects, rb_batch = replay_buffer.sample()            
-                scores = gflownet.get_scores(training_objects, entropy_coeff_net)
+                scores = gflownet.get_scores(training_objects)
         else:
             training_objects = training_samples
-            scores = gflownet.get_scores(training_objects, entropy_coeff_net)
+            scores = gflownet.get_scores(training_objects)
 
         if iteration > algo_config.learning_starts and iteration % algo_config.update_frequency == 0:
             optimizer.zero_grad()
@@ -232,65 +225,3 @@ def train_lambdadqn(
     np.save(f"{experiment_name}_kl.npy", np.array(kl_history))
     np.save(f"{experiment_name}_l1.npy", np.array(l1_history))
     np.save(f"{experiment_name}_nstates.npy", np.array(nstates_history))
-
-
-
-def get_terminating_state_dist_pmf(env: Env, states: States) -> TT["n_states", float]:
-    states_indices = env.get_terminating_states_indices(states).cpu().numpy().tolist()
-    counter = Counter(states_indices)
-    counter_list = [
-        counter[state_idx] if state_idx in counter else 0
-        for state_idx in range(env.n_terminating_states)
-    ]
-
-    return torch.tensor(counter_list, dtype=torch.float) / len(states_indices)
-
-
-def validate(
-    env: Env,
-    gflownet: GFlowNet,
-    n_validation_samples: int = 20000,
-    visited_terminating_states: Optional[States] = None,
-    entropy_coeff: float = 1.0,
-) -> Dict[str, float]:
-    """Evaluates the current gflownet on the given environment.
-
-    This is for environments with known target reward. The validation is done by
-    computing the l1 distance between the learned empirical and the target
-    distributions.
-
-    Args:
-        env: The environment to evaluate the gflownet on.
-        gflownet: The gflownet to evaluate.
-        n_validation_samples: The number of samples to use to evaluate the pmf.
-        visited_terminating_states: The terminating states visited during training. If given, the pmf is obtained from
-            these last n_validation_samples states. Otherwise, n_validation_samples are resampled for evaluation.
-
-    Returns: A dictionary containing the l1 validation metric. If the gflownet
-        is a TBGFlowNet, i.e. contains LogZ, then the (absolute) difference
-        between the learned and the target LogZ is also returned in the dictionary.
-    """
-
-    true_logZ = env.log_partition
-    true_dist_pmf = env.true_dist_pmf
-    if isinstance(true_dist_pmf, torch.Tensor):
-        true_dist_pmf = true_dist_pmf.cpu()
-    else:
-        # The environment does not implement a true_dist_pmf property, nor a log_partition property
-        # We cannot validate the gflownet
-        return {}
-
-    logZ = None
-    if visited_terminating_states is None:
-        terminating_states = gflownet.sample_terminating_states(n_validation_samples, entropy_coeff)
-    else:
-        terminating_states = visited_terminating_states[-n_validation_samples:]
-
-    final_states_dist_pmf = get_terminating_state_dist_pmf(env, terminating_states)
-    
-    l1_dist = (final_states_dist_pmf - true_dist_pmf).abs().mean().item()
-    kl_dist = (true_dist_pmf * torch.log(true_dist_pmf / (final_states_dist_pmf + 1e-12))).sum().item()
-    validation_info = {"l1_dist": l1_dist, "kl_dist": kl_dist}
-    if logZ is not None:
-        validation_info["logZ_diff"] = abs(logZ - true_logZ)
-    return validation_info

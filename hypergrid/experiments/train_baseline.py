@@ -4,7 +4,7 @@ https://github.com/GFNOrg/torchgfn/blob/master/tutorials/examples/train_hypergri
 """
 
 import torch
-#import wandb
+import wandb
 from tqdm import tqdm, trange
 import numpy as np
 

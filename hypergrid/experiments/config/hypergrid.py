@@ -21,7 +21,25 @@ def get_config(env_type):
             'R0': 0.0001,
             'R1': 1.0,
             'R2': 3.0
-        })
+        }),
+        "very_hard" : ConfigDict({
+            'name': 'Hypergrid',
+            'reward_type': 'very_hard',
+            'ndim': 4,
+            'height': 20,
+            'R0': 0.00001,
+            'R1': 1.5,
+            'R2': 4.0
+        }),
+        "extreme" : ConfigDict({
+            'name': 'Hypergrid',
+            'reward_type': 'extreme',
+            'ndim': 4,
+            'height': 20,
+            'R0': 0.000001,
+            'R1': 2.0,
+            'R2': 5.0
+        }),
     }
 
     return env_config[env_type]

@@ -53,7 +53,33 @@ def get_config(alg_name):
                 'tau': 0.25,
                 'is_double': False
             }),
-
+        "learnable_dqn": ConfigDict({
+                'name': 'LearnableDQN',
+                'tied': False,
+                'uniform_pb': True,
+                'learning_rate': 1e-3,
+                'loss_type': "MSE",  # "MSE" or "Huber"
+                'net': ConfigDict({
+                    'hidden_dim': 256,
+                    'n_hidden': 2
+                }),
+                'replay_buffer': ConfigDict({
+                    'replay_buffer_size': 100000,
+                    'batch_size': 256,
+                    'prioritized': True,
+                    'alpha': 0.5,
+                    'beta': 0.0
+                }),
+                'munchausen': ConfigDict({
+                    'alpha': 0.00,
+                    'l0': 0
+                }),
+                'learning_starts': 16,
+                'update_frequency': 1,
+                'target_network_frequency': 1,
+                'tau': 0.25,
+                'is_double': False
+            }),
         "lambda_dqn": ConfigDict({
                 'name': 'LambdaDQN',
                 'tied': False,
@@ -87,7 +113,7 @@ def get_config(alg_name):
                 'tied': False,
                 'uniform_pb': True,
                 'learning_rate': 1e-3,
-                'loss_type': "MSE",  # "MSE" or "Huber"
+                'loss_type': "Huber",  # "MSE" or "Huber"
                 'net': ConfigDict({
                     'hidden_dim': 256,
                     'n_hidden': 2
@@ -110,7 +136,6 @@ def get_config(alg_name):
                 'is_double': False
             }),
         
-
         "munchausen_dqn": ConfigDict({
                 'name': 'SoftDQN',
                 'tied': False,

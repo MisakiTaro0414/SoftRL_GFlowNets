@@ -1,9 +1,13 @@
 import torch
 from gfn.modules import DiscretePolicyEstimator, GFNModule
+# from .model import DiscretePolicyEstimator, GFNModule
+
 from torchtyping import TensorType as TT
 
 from gfn.containers import Trajectories, Transitions
 from gfn.gflownet import GFlowNet
+
+
 from gfn.states import States
 from gfn.samplers import Sampler
 
@@ -29,34 +33,36 @@ class RescaledDPE(DiscretePolicyEstimator):
         return super().forward(states) / self.scaling
 
 
-class SoftDQNGFlowNet(GFlowNet):
+class LearnableDQNGFlowNet(GFlowNet):
     def __init__(
         self,
         q: GFNModule,
         q_target: GFNModule,
         pb: GFNModule,
+        entropy_net: GFNModule,
         on_policy: bool = False,
         is_double: bool = False,
-        entropy_coeff: float = 1.,
+        # entropy_coeff: float = 1.,
         munchausen_alpha: float = 0.,
         munchausen_l0: float = -2.
     ):
         super().__init__()
         self.q = q
         self.pb = pb
+        self.entropy_net = entropy_net
         self.on_policy = on_policy
         self.is_double = is_double
 
         self.q_target = q_target
         self.q_target.load_state_dict(self.q.state_dict())
 
-        self.entropy_coeff = entropy_coeff
+        # self.entropy_coeff = entropy_coeff
         self.munchausen_alpha = munchausen_alpha
         self.munchausen_l0 = munchausen_l0
 
-    def sample_trajectories(self, n_samples: int = 1000) -> Trajectories:
+    def sample_trajectories(self, n_samples: int = 1000, entropy_coeff: float = 1.0) -> Trajectories:
         sampler = Sampler(estimator=RescaledDPE(
-                self.q, scaling=self.entropy_coeff
+                self.q, scaling=entropy_coeff
             )
         )
         trajectories = sampler.sample_trajectories(n_trajectories=n_samples)
@@ -75,8 +81,7 @@ class SoftDQNGFlowNet(GFlowNet):
                           out=target_param.data)
 
     def get_scores(
-        self, transitions: Transitions
-    ):
+        self, transitions: Transitions):
         """Given a batch of transitions, calculate the scores.
 
         Args:
@@ -91,15 +96,22 @@ class SoftDQNGFlowNet(GFlowNet):
         states = transitions.states
         actions = transitions.actions
 
+                
+
         # uncomment next line for debugging
         # assert transitions.states.is_sink_state.equal(transitions.actions.is_dummy)
 
         if states.batch_shape != tuple(actions.batch_shape):
             raise ValueError("Something wrong happening with log_pf evaluations")
 
+        # import pdb; pdb.set_trace()
         q_s = self.q(states)
-        q_s[~states.forward_masks] = -float("inf")
+        entropy_coeff_s_a = torch.nn.Softmax(dim=-1)(self.entropy_net(q_s))
+        entropy_coeff_s = torch.max(entropy_coeff_s_a, dim=-1).values.unsqueeze(-1)
+      
+      
 
+        # import pdb; pdb.set_trace()
         # change actions.tensor device to q_s device
         actions.tensor = actions.tensor.to(q_s.device)
         preds = torch.gather(q_s, 1, actions.tensor).squeeze(-1)
@@ -126,40 +138,44 @@ class SoftDQNGFlowNet(GFlowNet):
 
         with torch.no_grad():
             q_sn_target = self.q_target(valid_next_states)
+            entropy_coeff_sn_a = torch.nn.Softmax(dim=-1)(self.entropy_net(q_sn_target))
+            entropy_coeff_sn = torch.max(entropy_coeff_sn_a, dim=-1).values.unsqueeze(-1)
+            
             q_sn_target[~valid_next_states.forward_masks] = -float("inf")
             if not self.is_double:
-                valid_v_target_next = self.entropy_coeff * torch.logsumexp(
-                    q_sn_target / self.entropy_coeff, dim=-1
+                valid_v_target_next = entropy_coeff_sn.squeeze(-1) * torch.logsumexp(
+                    q_sn_target / entropy_coeff_sn, dim=-1
                 ).squeeze(-1)
             else:
-                q_sn = self.q(valid_next_states) / self.entropy_coeff
+                q_sn = self.q(valid_next_states) / entropy_coeff_sn
                 q_sn[~valid_next_states.forward_masks] = -float("inf")
                 policy_sn = torch.exp(q_sn)
                 policy_sn /= policy_sn.sum(dim=-1, keepdim=True)
                 log_policy_sn = torch.log(policy_sn + 1e-9)
                 q_sn_target[~valid_next_states.forward_masks] = 0
                 valid_v_target_next = torch.sum(
-                    (q_sn_target - self.entropy_coeff * log_policy_sn),
+                    policy_sn * (q_sn_target - entropy_coeff_sn * log_policy_sn),
                     dim=-1
                 ).squeeze(-1)
 
-        targets[~valid_transitions_is_done] = valid_log_pb_actions + valid_v_target_next
+        # import pdb; pdb.set_trace()
+        targets[~valid_transitions_is_done] = entropy_coeff_s[~valid_transitions_is_done].squeeze(-1) * valid_log_pb_actions + valid_v_target_next
         assert transitions.log_rewards is not None
         valid_transitions_log_rewards = transitions.log_rewards[
             ~transitions.states.is_sink_state
         ]
-        targets[valid_transitions_is_done] = valid_transitions_log_rewards[
+        targets[valid_transitions_is_done] =  entropy_coeff_s[valid_transitions_is_done].squeeze(-1) * valid_transitions_log_rewards[
             valid_transitions_is_done
         ]
 
         if self.munchausen_alpha > 0:
             with torch.no_grad():
-                q_s_target = self.q_target(states) / self.entropy_coeff
+                q_s_target = self.q_target(states) / entropy_coeff_s
                 q_s_target[~states.forward_masks] = -float("inf")
                 v_s_target = torch.logsumexp(q_s_target, dim=-1).squeeze(-1)
                 q_sa_target = torch.gather(q_s_target, 1, actions.tensor).squeeze(-1)
                 log_pf_target = (q_sa_target - v_s_target)
-                penalty = (self.entropy_coeff * log_pf_target).clamp(
+                penalty = (entropy_coeff_s * log_pf_target).clamp(
                     min=self.munchausen_l0,
                     max=0.
                 )
