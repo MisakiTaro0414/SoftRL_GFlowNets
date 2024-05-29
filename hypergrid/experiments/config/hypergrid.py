@@ -8,7 +8,7 @@ def get_config(env_type):
             'name': 'Hypergrid',
             'reward_type': 'standard',
             'ndim': 4,
-            'height': 20,
+            'height': 32,
             'R0': 0.001,
             'R1': 0.5,
             'R2': 2.0
@@ -17,7 +17,7 @@ def get_config(env_type):
             'name': 'Hypergrid',
             'reward_type': 'hard',
             'ndim': 4,
-            'height': 20,
+            'height': 32,
             'R0': 0.0001,
             'R1': 1.0,
             'R2': 3.0

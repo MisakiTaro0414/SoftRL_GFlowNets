@@ -49,6 +49,15 @@ def train_lambdadqn(
 
     if algo_config.munchausen.alpha > 0:
         experiment_name += f"_M_alpha={algo_config.munchausen.alpha}"
+    
+    if algo_config.lambda_dist == "Uniform":
+        experiment_name += "_Uniform"
+    elif algo_config.lambda_dist == "Normal":
+        experiment_name += "_Normal"
+    elif algo_config.lambda_dist == "Gamma":
+        experiment_name += "_Gamma"
+    else:
+        experiment_name += "_Fixed_1.0"
 
     use_wandb = len(general_config.wandb_project) > 0
     # use_wandb = False
@@ -147,21 +156,22 @@ def train_lambdadqn(
     n_iterations = general_config.n_trajectories // general_config.n_envs
     # make entropy_coeff a learnable parameter based on Q(s,a)
     # entropy_coeff = torch.nn.Parameter(torch.tensor(1.0))
-    entropy_coeff_net = NeuralNet(
-        input_dim=env.preprocessor.output_dim,
-        output_dim=1,
-        hidden_dim=algo_config.net.hidden_dim,
-        n_hidden_layers=algo_config.net.n_hidden,
-    )
-
-    entropy_coeff_net.to(env.device)
+  
 
     for iteration in trange(n_iterations):
         progress = float(iteration) / n_iterations
-        # entropy_coeff = torch.distributions.Uniform(0, 2).sample() 
-    
+        if algo_config.lambda_dist == "Uniform":
+            entropy_coeff = torch.distributions.Uniform(0, 2).sample()
+        elif algo_config.lambda_dist == "Normal":
+            entropy_coeff = torch.distributions.Normal(1, 0.3).sample()
+            if entropy_coeff <= 0:
+                entropy_coeff = torch.tensor(0.1)
+        elif algo_config.lambda_dist == "Gamma":
+            entropy_coeff = torch.distributions.Gamma(2, 2).sample()
+        else:
+            entropy_coeff = torch.tensor(1.0)
         # entropy_coeff = torch.distributions.Normal(1, 0.3).sample()
-        trajectories = gflownet.sample_trajectories(n_samples=general_config.n_envs, entropy_coeff=1.0)
+        trajectories = gflownet.sample_trajectories(n_samples=general_config.n_envs, entropy_coeff= entropy_coeff)
         training_samples = gflownet.to_training_samples(trajectories)
 
 
@@ -170,7 +180,7 @@ def train_lambdadqn(
             with torch.no_grad():
                 # For priortized RB
                 if replay_buffer.prioritized:
-                    scores = gflownet.get_scores(training_samples, entropy_coeff_net)
+                    scores = gflownet.get_scores(training_samples, entropy_coeff)
                     td_error = loss_fn(scores, torch.zeros_like(scores))
                     replay_buffer.add(training_samples, td_error)
                     # Annealing of beta
@@ -180,10 +190,10 @@ def train_lambdadqn(
 
             if iteration > algo_config.learning_starts:
                 training_objects, rb_batch = replay_buffer.sample()            
-                scores = gflownet.get_scores(training_objects, entropy_coeff_net)
+                scores = gflownet.get_scores(training_objects, entropy_coeff)
         else:
             training_objects = training_samples
-            scores = gflownet.get_scores(training_objects, entropy_coeff_net)
+            scores = gflownet.get_scores(training_objects, entropy_coeff)
 
         if iteration > algo_config.learning_starts and iteration % algo_config.update_frequency == 0:
             optimizer.zero_grad()
@@ -225,13 +235,21 @@ def train_lambdadqn(
             nstates_history.append(to_log["states_visited"])
 
         if (iteration + 1) % 1000 == 0:
-            np.save(f"{experiment_name}_kl.npy", np.array(kl_history))
-            np.save(f"{experiment_name}_l1.npy", np.array(l1_history))
-            np.save(f"{experiment_name}_nstates.npy", np.array(nstates_history))
+            with open(f"{experiment_name}_kl_l1_nstates.txt", "w") as f:
+                for kl, l1, nstates in zip(kl_history, l1_history, nstates_history):
+                    f.write("%s\t%s\t%s\n" % (kl, l1, nstates))
+                
 
-    np.save(f"{experiment_name}_kl.npy", np.array(kl_history))
-    np.save(f"{experiment_name}_l1.npy", np.array(l1_history))
-    np.save(f"{experiment_name}_nstates.npy", np.array(nstates_history))
+    with open(f"{experiment_name}_kl_l1_nstates.txt", "w") as f:
+        for kl, l1, nstates in zip(kl_history, l1_history, nstates_history):
+            f.write("%s\t%s\t%s\n" % (kl, l1, nstates))
+
+   
+
+    
+
+            
+
 
 
 

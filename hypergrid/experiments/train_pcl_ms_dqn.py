@@ -191,10 +191,10 @@ def train_pcl_ms_dqn(
             nstates_history.append(to_log["states_visited"])
 
         if (iteration + 1) % 1000 == 0:
-            np.save(f"{experiment_name}_kl.npy", np.array(kl_history))
-            np.save(f"{experiment_name}_l1.npy", np.array(l1_history))
-            np.save(f"{experiment_name}_nstates.npy", np.array(nstates_history))
+            with open(f"{experiment_name}_kl_l1_nstates.txt", "w") as f:
+                for kl, l1, nstates in zip(kl_history, l1_history, nstates_history):
+                    f.write("%s\t%s\t%s\n" % (kl, l1, nstates))
 
-    np.save(f"{experiment_name}_kl.npy", np.array(kl_history))
-    np.save(f"{experiment_name}_l1.npy", np.array(l1_history))
-    np.save(f"{experiment_name}_nstates.npy", np.array(nstates_history))
+    with open(f"{experiment_name}_kl_l1_nstates.txt", "w") as f:
+        for kl, l1, nstates in zip(kl_history, l1_history, nstates_history):
+            f.write("%s\t%s\t%s\n" % (kl, l1, nstates))

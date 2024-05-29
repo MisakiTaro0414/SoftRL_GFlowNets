@@ -105,7 +105,8 @@ def get_config(alg_name):
                 'update_frequency': 1,
                 'target_network_frequency': 1,
                 'tau': 0.25,
-                'is_double': False
+                'is_double': False,
+                'lambda_dist': "Uniform" # "Uniform" or "Normal" or "Gamma"
             }),
 
         "soft_dqn": ConfigDict({
