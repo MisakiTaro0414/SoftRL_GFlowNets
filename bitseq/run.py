@@ -25,12 +25,12 @@ parser.add_argument("--mode_threshold", default=30, type=int)
 parser.add_argument("--reward_exponent", default=2.0, type=float)
 parser.add_argument("--seed", default=0, type=int)
 
-parser.add_argument("--device", default='cuda', type=str)
+parser.add_argument("--device", default='cpu', type=str)
 parser.add_argument("--num_iterations", default=50000, type=int)
 parser.add_argument("--rand_action_prob", default=0.001, type=float)
 parser.add_argument("--learning_rate", default=0.001, type=float)
 parser.add_argument("--dropout", default=0.1, type=float)
-parser.add_argument("--batch_size", default=16, type=int)
+parser.add_argument("--batch_size", default=56, type=int)
 parser.add_argument("--print_every", default=50, type=int)
 parser.add_argument("--print_modes", default=False, action='store_true')
 
@@ -47,7 +47,7 @@ parser.add_argument("--softdqn_loss", default='Huber', type=str)
 
 # Replay buffer parameters
 parser.add_argument("--rb_size", default=100_000, type=int)
-parser.add_argument("--rb_batch_size", default=256, type=int)
+parser.add_argument("--rb_batch_size", default=36, type=int)
 parser.add_argument("--per_alpha", default=0.9, type=float)
 parser.add_argument("--per_beta", default=0.1, type=float)
 parser.add_argument("--anneal_per_beta", default=False, action='store_true')
@@ -56,6 +56,10 @@ parser.add_argument("--anneal_per_beta", default=False, action='store_true')
 parser.add_argument("--m_alpha", default=0.0, type=float)
 parser.add_argument("--entropy_coeff", default=1.0, type=float)
 parser.add_argument("--m_l0", default=-25.0, type=float)
+
+# Lambda DQN parameters
+parser.add_argument("--lambda_dist", default="Uniform", type=str)
+
 
 
 class PositionalEncoding(nn.Module):
@@ -67,6 +71,7 @@ class PositionalEncoding(nn.Module):
         div_term = torch.exp(torch.arange(0, d_model, 2) * (-math.log(10000.0) / d_model))
         pe = torch.zeros(max_len, 1, d_model)
         pe[:, 0, 0::2] = torch.sin(position * div_term)
+        # import pdb; pdb.set_trace()
         pe[:, 0, 1::2] = torch.cos(position * div_term)
         self.register_buffer('pe', pe)
 
@@ -88,6 +93,29 @@ class TransformerModel(nn.Module):
 
     def forward(self, src: Tensor, src_mask: Tensor = None) -> Tensor:
         src = self.embedding(src) 
+        src = self.pos_encoder(src)
+        output = self.transformer_encoder(src, src_mask)
+        output = self.linear(output)
+        return output
+
+class TransformerModel_Lambda(nn.Module):
+    def __init__(self, ntoken: int, d_model: int, nhead: int, d_hid: int,
+                 nlayers: int, seq_len: int, dropout: float = 0.2):
+        super().__init__()
+        self.model_type = 'Transformer'
+        self.pos_encoder = PositionalEncoding(d_model + nhead, dropout, max_len=seq_len + 2)
+        encoder_layers = TransformerEncoderLayer(d_model + nhead, nhead, d_hid, dropout)
+        self.transformer_encoder = TransformerEncoder(encoder_layers, nlayers)
+        self.embedding = nn.Embedding(ntoken, d_model)
+        self.d_model = d_model + nhead
+        self.nhead = nhead
+        self.linear = nn.Linear(d_model + nhead, ntoken + seq_len + 1)
+
+    def forward(self, src: Tensor, entropy_coeff: Tensor, src_mask: Tensor = None) -> Tensor:
+        src = self.embedding(src)
+        entropy_coeff = entropy_coeff * torch.ones([src.shape[0], src.shape[1], self.nhead]).to(src.device)
+        # import pdb; pdb.set_trace()
+        src = torch.cat((src, entropy_coeff), dim=2)
         src = self.pos_encoder(src)
         output = self.transformer_encoder(src, src_mask)
         output = self.linear(output)
@@ -301,7 +329,6 @@ def SubTB_train_step(model, optimizer, M, args):
     
     assert batch[:, 1:].max() < 2 ** args.k
     return loss.cpu().item(), batch[:, 1:].cpu()
- 
 
 def SoftDQN_collect_experience(rb, model, target_model, M, args):
     # This code is pretty simple because all trajectories in our graph have the same length.
@@ -309,11 +336,15 @@ def SoftDQN_collect_experience(rb, model, target_model, M, args):
     # The seqence has length n/k + 1 and at the beginning looks like [2^k + 1, 2^k, 2^k, ..., 2^k].
     # 2^k + 1: [BOS] token, 2^k: token for "empty" word.
     batch = torch.tensor([[2 ** args.k + 1] + ([2 ** args.k] * (args.n // args.k)) for i in range(args.batch_size)]).to(args.device)
+
     with torch.no_grad():
         for i in range(args.n // args.k):
             pos_mask = batch != 2 ** args.k
-        
-            all_logits = model(batch.T)
+
+            if args.objective == "lambda_dqn":
+                all_logits = model(batch.T, args.entropy_coeff)
+            else:
+                all_logits = model(batch.T)
             _, _, sum_logits = process_logits(all_logits, pos_mask, args)
             _, _, sum_uniform = process_logits(0.0 * all_logits.clone(), pos_mask, args)
 
@@ -322,10 +353,15 @@ def SoftDQN_collect_experience(rb, model, target_model, M, args):
             next_batch = batch.clone()
             next_batch[range(args.batch_size), positions] = words
             rewards = torch.log(torch.tensor([1 / (i+1)] * args.batch_size).to(args.device)) 
-
+            if args.objective == "lambda_dqn":
+                rewards *= args.entropy_coeff
+            
             # The last added word
             if i + 1 == args.n // args.k:
-                rewards += args.reward_exponent * batch_log_rewards(next_batch[:, 1:], M, args.k).to(args.device)
+                if args.objective == "lambda_dqn":
+                    rewards += args.entropy_coeff * args.reward_exponent * batch_log_rewards(next_batch[:, 1:], M, args.k).to(args.device)
+                else:
+                    rewards += args.reward_exponent * batch_log_rewards(next_batch[:, 1:], M, args.k).to(args.device)
                 is_done = torch.tensor([1.0] * args.batch_size).to(args.device)
             else:
                 is_done = torch.tensor([0.0] * args.batch_size).to(args.device)
@@ -365,7 +401,10 @@ def SoftDQN_learn_rb(progress, rb, model, target_model, optimizer, M, args):
     rb_batch = rb.sample().to(args.device)
     # Compute td-loss
     pos_mask = rb_batch["state"] != 2 ** args.k
-    all_logits = model(rb_batch["state"].T)
+    if args.objective == "lambda_dqn":
+        all_logits = model(rb_batch["state"].T, args.entropy_coeff)
+    else:
+        all_logits = model(rb_batch["state"].T)
     _, _, sum_logits = process_logits(all_logits, pos_mask, args)
     if args.m_alpha > 0:
         all_target_logits = target_model(rb_batch["state"].T)
@@ -373,13 +412,24 @@ def SoftDQN_learn_rb(progress, rb, model, target_model, optimizer, M, args):
         norm_target_logits = sum_target_logits / args.entropy_coeff  
 
     q_values = sum_logits[range(args.rb_batch_size), rb_batch["action"]]
+
+    if args.objective == "learnable_dqn":
+        entropy_coeff_s_a =  torch.nn.Softmax(dim=-1)(args.entropy_coeff_net(q_values.unsqueeze(-1))).squeeze(-1)
+        args.entropy_coeff = torch.max(entropy_coeff_s_a, dim=-1).values.unsqueeze(-1)
     
     with torch.no_grad():
         pos_mask = rb_batch["next_state"] != 2 ** args.k
-        all_target_logits = target_model(rb_batch["next_state"].T)
+        if args.objective == "lambda_dqn":
+            all_target_logits = target_model(rb_batch["next_state"].T, args.entropy_coeff)
+        else:
+            all_target_logits = target_model(rb_batch["next_state"].T)
+    
         _, _, sum_target_logits = process_logits(all_target_logits, pos_mask, args)
         target_v_next_values = args.entropy_coeff * torch.logsumexp(sum_target_logits / args.entropy_coeff, dim=-1)
         target_v_next_values[rb_batch["is_done"].bool()] = 0.0
+        if args.objective == "learnable_dqn":
+            rb_batch["rewards"] *= args.entropy_coeff
+
         td_target = rb_batch["rewards"] + target_v_next_values
         
         if args.m_alpha > 0:
@@ -421,7 +471,7 @@ def compute_correlation(model, M, test_set, args, rounds=10, batch_size=180):
             for i in range(args.n // args.k):
                 with torch.no_grad():
                     pos_mask = batch != 2 ** args.k
-                    all_logits = model(batch.T)
+                    all_logits = model(batch.T, args.entropy_coeff)
                     pos_logits, word_logits, sum_logits = process_logits(all_logits, pos_mask, args)
 
                     # There is a bug in pytorch that allows to sample objects that has 0 probability (happens very rarely but still happens).
@@ -468,11 +518,18 @@ def main(args):
 
     model = TransformerModel(ntoken=2**args.k+2, d_model=64, d_hid=64, nhead=8, nlayers=3, 
                              seq_len=args.n//args.k, dropout=args.dropout).to(device)
-    if args.objective == "softdqn":
+    if args.objective  == "lambda_dqn":
+        model = TransformerModel_Lambda(ntoken=2**args.k+2, d_model=64, d_hid=64, nhead=8, nlayers=3, 
+                                        seq_len=args.n//args.k, dropout=args.dropout).to(device)    
+    if args.objective == "softdqn" or args.objective == "learnable_dqn":
         target_model = TransformerModel(ntoken=2**args.k+2, d_model=64, d_hid=64, nhead=8, nlayers=3, 
                                         seq_len=args.n//args.k, dropout=args.dropout).to(device)
         target_model.load_state_dict(model.state_dict())
-        
+    if args.objective == "lambda_dqn":
+        target_model = TransformerModel_Lambda(ntoken=2**args.k+2, d_model=64, d_hid=64, nhead=8, nlayers=3,
+                                                  seq_len=args.n//args.k, dropout=args.dropout).to(device)
+        target_model.load_state_dict(model.state_dict())
+
     log_Z = nn.Parameter(torch.tensor(np.ones(64) * 0.0 / 64, requires_grad=True, device=device))
     
     optimizer = torch.optim.Adam(model.parameters(), args.learning_rate, weight_decay=1e-5)
@@ -497,7 +554,27 @@ def main(args):
     if args.objective == "softdqn":
         # Renormalize entropy for Munchausen DQN
         args.entropy_coeff *= 1/(1 - args.m_alpha)
+    if args.objective == "lambda_dqn":
+        if args.lambda_dist == "Uniform":
+            args.entropy_coeff = torch.distributions.Uniform(0, 2).sample()
+        elif args.lambda_dist == "Normal":
+            args.entropy_coeff = torch.distributions.Normal(1, 0.3).sample()
+            if args.entropy_coeff <= 0:
+                args.entropy_coeff = torch.tensor(0.1)
+        elif args.lambda_dist == "Gamma":
+            args.entropy_coeff = torch.distributions.Gamma(2, 2).sample()
+    # if args.objective == "learnable_dqn":
+    #     args.entropy_coeff_net = 
+    if args.objective == 'learnable_dqn':
+        args.entropy_coeff_net = torch.nn.Sequential(
+            nn.Linear(1, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1)
+        ).to(device)
     
+
     for it in range(args.num_iterations + 1):
         progress = float(it) / args.num_iterations
         if args.objective == "tb":
@@ -506,7 +583,7 @@ def main(args):
             loss, batch = DB_train_step(model, optimizer, M, args)
         elif args.objective == "subtb":
             loss, batch = SubTB_train_step(model, optimizer, M, args)
-        elif args.objective == "softdqn":
+        elif args.objective == "softdqn" or args.objective == "lambda_dqn" or args.objective == "learnable_dqn":
             # First, collect experiences for experience replay
             batch = SoftDQN_collect_experience(rb, model, target_model, M, args)
             # Next, sample transitions from the buffer and calculate the loss
