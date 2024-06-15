@@ -131,6 +131,8 @@ class PCLDQNGFlowNet(GFlowNet):
             ~transitions.states.is_sink_state
         ]
 
+        #import pdb; pdb.set_trace()
+
         policy_s = torch.exp(q_s)
         policy_sum = policy_s.sum(dim=-1, keepdim=True)
 
@@ -139,7 +141,7 @@ class PCLDQNGFlowNet(GFlowNet):
         
         log_policy_s_a = torch.log(policy_s_a + 1e-9)
 
-        # import pdb; pdb.set_trace()
+        import pdb; pdb.set_trace()
 
        
         # log_policy_s_a = torch.gather(log_policy_s, 1, actions.tensor).squeeze(-1)
@@ -157,10 +159,7 @@ class PCLDQNGFlowNet(GFlowNet):
             q_sn_target[~valid_next_states.forward_masks] = -float("inf")
             valid_v_target_next = self.entropy_coeff * torch.logsumexp(
                     q_sn_target / self.entropy_coeff, dim=-1
-                ).squeeze(-1)
-            valid_v_target = self.entropy_coeff * torch.logsumexp(
-                    q_s_target / self.entropy_coeff, dim=-1
-                ).squeeze(-1)   
+                ).squeeze(-1) 
             
           
         ## sample action with log_pb and use it to calculate target

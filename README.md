@@ -1,8 +1,11 @@
-# Generative Flow Networks as Entropy-Regularized RL
+# Bridging the Gap Between Soft RL and GFlowNets
 
-Official code for the paper [Generative Flow Networks as Entropy-Regularized RL](https://arxiv.org/abs/2310.12934). 
 
-Daniil Tiapkin*, Nikita Morozov*, Alexey Naumov, Dmitry Vetrov.
+Official code for the project [Bridging the Gap Between Soft RL and GFlowNets](https://drive.google.com/file/d/1Nc90rokaaxV5gHCdVAmPkv3IG5RcDpTH/view?usp=sharing). 
+
+Ayhan Suleymanzade, Zahra Bayramli
+
+This repository is build upon the related work [GFlowNets as Entropy-Regularized RL](https://github.com/d-tiapkin/gflownet-rl)
 
 ## Installation
 
@@ -26,12 +29,6 @@ You can change `pytorch-cuda=11.8` with `pytorch-cuda=XX.X` to match your versio
 pip install -r requirements.txt
 ```
 
--*(Optional)* Install dependencies for molecule experiemtns
-```sh
-pip install -r requirements_mols.txt
-```
-You can change `requirements_mols.txt` to match your `CUDA` version by replacing `cu118` by `cuXXX`.
-
 ## Hypergrids
 
 Code for this part heavily utlizes library `torchgfn` (https://github.com/GFNOrg/torchgfn).
@@ -43,37 +40,14 @@ Path to configurations (utlizes `ml-collections` library):
 - Environment: `hypergrid/experiments/config/hypergrid.py`
 
 List of available algorithms:
-- Baselines: `db`, `tb`, `subtb` from `torchgfn` library;
-- Soft RL algorithms: `soft_dqn`, `munchausen_dqn`, `sac`.
+- GFlowNets Baselines: `db`, `tb`, `subtb` from `torchgfn` library;
+- Soft RL Baselines: `soft_dqn`, `munchausen_dqn`, `sac`.
+- Our Algorithms: `learnable_dqn`, `lambda_dqn`, `pcl_dqn`, `pcl_ms_dqn`
 
-Example of running the experiment on environment with `height=20`, `ndim=4` with `standard` rewards, seed `3` on the algorithm `soft_dqn`.
+Example of running the experiment on environment with `height=20`, `ndim=4` with `standard` rewards, seed `3` on the algorithm `lambda_dqn`.
 ```bash
-    python run_hypergrid_exp.py --general experiments/config/general.py:3 --env experiments/config/hypergrid.py:standard --algo experiments/config/algo.py:soft_dqn --env.height 20 --env.ndim 4
+    python run_hypergrid_exp.py --general experiments/config/general.py:3 --env experiments/config/hypergrid.py:standard --algo experiments/config/algo.py:lambda_dqn --env.height 20 --env.ndim 4
 ```
-To activate learnable backward policy for this setting
-```bash
-    python run_hypergrid_exp.py --general experiments/config/general.py:3 --env experiments/config/hypergrid.py:standard --algo experiments/config/algo.py:soft_dqn --env.height 20 --env.ndim 4 --algo.tied True --algo.uniform_pb False
-```
-
-
-## Molecules
-
-The presented experiments actively reuse the existing codebase for molecule generation experiments with GFlowNets (https://github.com/GFNOrg/gflownet/tree/subtb/mols).
-
-Additional requirements for molecule experiments: 
-- `pandas rdkit torch_geometric h5py ray hydra` (installation is available in `requirements_mols.txt`)
-
-Path to configurations of `MunchausenDQN` (utilizes `hydra` library)
-- General configuration: `mols/configs/soft_dqn.yaml`
-- Algorithm: `mols/configs/algorithm/soft_dqn.yaml`
-- Environment:  `mols/configs/environment/block_mol.yaml`
-
-To run `MunchausenDQN` with configurations prescribed above, use
-```
-    python soft_dqn.py
-```
-To reporoduce baselines, run `gflownet.py` with required parameters, we refer to the original repository https://github.com/GFNOrg/gflownet for additional details.
-
 
 ## Bit sequences
 
@@ -103,15 +77,53 @@ Example of running `MunchausenDQN`:
 python bitseq/run.py --objective softdqn --m_alpha 0.15 --k 8 --learning_rate 0.002 --leaf_coeff 2.0 
 ```
 
-## Citation
+Example of running `LearnableDQN`:
 
 ```
-@inproceedings{tiapkin2024generative,
-  title={Generative flow networks as entropy-regularized rl},
-  author={Tiapkin, Daniil and Morozov, Nikita and Naumov, Alexey and Vetrov, Dmitry P},
-  booktitle={International Conference on Artificial Intelligence and Statistics},
-  pages={4213--4221},
-  year={2024},
-  organization={PMLR}
-}
+python bitseq/run.py --objective learnable_dqn --m_alpha 0.0 --k 8 --learning_rate 0.002 --leaf_coeff 2.0 
 ```
+
+Example of running `LambdaDQN`:
+
+```
+python bitseq/run.py --objective lambda_dqn --m_alpha 0.0 --k 8 --learning_rate 0.002 --leaf_coeff 2.0 --lambda_dist "Gamma"
+```
+
+Example of running `PCLDQN`:
+
+```
+python bitseq/run.py --objective pcl_dqn --m_alpha 0.0 --k 8 --learning_rate 0.002 --leaf_coeff 2.0 
+```
+
+Example of running `PCL_MS_DQN`:
+
+```
+python bitseq/run.py --objective pcl_ms_dqn --m_alpha 0.0 --k 8 --learning_rate 0.002 --leaf_coeff 2.0 --v_learning_rate 0.001
+```
+
+## Results
+
+You can find all the results in the following directories:
+
+- `/hypergrid/grid_results`
+- `/bitseq/bitseq_results`
+
+These directories correspond to the Hypergrid and Bit sequences experiments, respectively.
+
+### Hypergrid Results
+
+The columns in the Hypergrid results files are as follows:
+1. **First Column:** KL Divergence
+2. **Second Column:** L1 Distance
+3. **Third Column:** Timestep
+
+### Bit Sequences Results
+
+The columns in the Bit Sequences results files are as follows:
+1. **First Column:** Number of Modes Captured
+2. **Second Column:** Spearman Correlation
+3. **Third Column:** Timestep
+
+
+
+

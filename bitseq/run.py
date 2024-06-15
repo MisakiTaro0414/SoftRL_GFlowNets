@@ -6,10 +6,12 @@ from tempfile import TemporaryDirectory
 from typing import Tuple
 from scipy.stats import spearmanr
 
+
 import torch
 from torch import nn, Tensor
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
 from torch.utils.data import dataset
+from torch.autograd import Variable
 from torch.distributions.categorical import Categorical
 
 from torchrl.data import TensorDictReplayBuffer, LazyTensorStorage
@@ -25,12 +27,12 @@ parser.add_argument("--mode_threshold", default=30, type=int)
 parser.add_argument("--reward_exponent", default=2.0, type=float)
 parser.add_argument("--seed", default=0, type=int)
 
-parser.add_argument("--device", default='cpu', type=str)
+parser.add_argument("--device", default='cuda:0', type=str)
 parser.add_argument("--num_iterations", default=50000, type=int)
 parser.add_argument("--rand_action_prob", default=0.001, type=float)
 parser.add_argument("--learning_rate", default=0.001, type=float)
 parser.add_argument("--dropout", default=0.1, type=float)
-parser.add_argument("--batch_size", default=56, type=int)
+parser.add_argument("--batch_size", default=16, type=int)
 parser.add_argument("--print_every", default=50, type=int)
 parser.add_argument("--print_modes", default=False, action='store_true')
 
@@ -47,7 +49,7 @@ parser.add_argument("--softdqn_loss", default='Huber', type=str)
 
 # Replay buffer parameters
 parser.add_argument("--rb_size", default=100_000, type=int)
-parser.add_argument("--rb_batch_size", default=36, type=int)
+parser.add_argument("--rb_batch_size", default=256, type=int)
 parser.add_argument("--per_alpha", default=0.9, type=float)
 parser.add_argument("--per_beta", default=0.1, type=float)
 parser.add_argument("--anneal_per_beta", default=False, action='store_true')
@@ -59,6 +61,9 @@ parser.add_argument("--m_l0", default=-25.0, type=float)
 
 # Lambda DQN parameters
 parser.add_argument("--lambda_dist", default="Uniform", type=str)
+
+# PCL-MS-DQN parameters
+parser.add_argument("--v_learning_rate", default=0.001, type=float)
 
 
 
@@ -455,6 +460,130 @@ def SoftDQN_learn_rb(progress, rb, model, target_model, optimizer, M, args):
 
     return loss.cpu().item()
 
+def PCL_DQN_learn_rb(progress, rb, model, target_model, optimizer, M, args):
+    # Select loss function
+    if args.softdqn_loss == 'Huber':
+        loss_fn = torch.nn.HuberLoss(reduction='none')
+    else:
+        loss_fn = torch.nn.MSELoss(reduction='none')
+    if args.anneal_per_beta:
+        # Update beta parameter of experience replay
+        add_beta = (1. - args.per_beta) * progress
+        rb._sampler._beta = args.per_beta + add_beta
+
+    model.train()
+    optimizer.zero_grad()
+
+    # Sample from replay buffer
+    rb_batch = rb.sample().to(args.device)
+    # Compute td-loss
+    pos_mask = rb_batch["state"] != 2 ** args.k
+    
+    all_logits = model(rb_batch["state"].T)
+    _, _, sum_logits = process_logits(all_logits, pos_mask, args)
+    if args.m_alpha > 0:
+        all_target_logits = target_model(rb_batch["state"].T)
+        _, _, sum_target_logits = process_logits(all_target_logits, pos_mask, args)
+        norm_target_logits = sum_target_logits / args.entropy_coeff  
+
+    q_values = sum_logits[range(args.rb_batch_size), rb_batch["action"]]
+
+    
+
+    policy_s = torch.exp(sum_logits)
+    policy_sum = policy_s.sum(dim=-1, keepdim=True)
+
+    policy_s_a = policy_s / policy_sum
+    policy_s_a = policy_s_a[range(args.rb_batch_size), rb_batch["action"]]
+    
+    log_policy_s_a = torch.log(policy_s_a + 1e-9)
+
+    valid_v = args.entropy_coeff * torch.logsumexp(sum_logits / args.entropy_coeff, dim=-1)
+    valid_v[rb_batch["is_done"].bool()] = 0.0
+
+    
+    with torch.no_grad():
+        pos_mask = rb_batch["next_state"] != 2 ** args.k
+        all_target_logits = target_model(rb_batch["next_state"].T)
+    
+        _, _, sum_target_logits = process_logits(all_target_logits, pos_mask, args)
+        target_v_next_values = args.entropy_coeff * torch.logsumexp(sum_target_logits / args.entropy_coeff, dim=-1)
+        target_v_next_values[rb_batch["is_done"].bool()] = 0.0
+      
+        td_target = rb_batch["rewards"] + target_v_next_values - valid_v - args.entropy_coeff * log_policy_s_a
+        
+        if args.m_alpha > 0:
+            target_log_policy = norm_target_logits[range(args.rb_batch_size), rb_batch["action"]] - torch.logsumexp(norm_target_logits, dim=-1)
+            munchausen_penalty = torch.clamp(
+                args.entropy_coeff * target_log_policy,
+                min=args.m_l0, max=1
+            )
+            td_target += args.m_alpha * munchausen_penalty
+
+    
+    td_errors = loss_fn(torch.zeros_like(td_target, requires_grad=True), td_target)
+    td_errors[rb_batch["is_done"].bool()] *= args.leaf_coeff
+
+    # Update PER
+    rb_batch["td_error"] = td_errors
+    rb.update_tensordict_priority(rb_batch)
+
+    # Compute loss with IS correction
+    loss = (td_errors * rb_batch["_weight"]).mean()
+    # loss = Variable(loss, requires_grad=True)
+    #loss = td_errors.mean()
+    loss.backward()
+    optimizer.step()
+
+    return loss.cpu().item()
+
+def PCL_MS_DQN_train_step(model, V, optimizer, V_optimizer, M, args):
+    model.train()
+    optimizer.zero_grad()
+    V_optimizer.zero_grad()
+
+    V_sum = V.sum()
+
+    # The seqence has length n/k + 1 and at the beginning looks like [2^k + 1, 2^k, 2^k, ..., 2^k].
+    # 2^k + 1: [BOS] token, 2^k: token for "empty" word.
+    batch = torch.tensor([[2 ** args.k + 1] + ([2 ** args.k] * (args.n // args.k)) for i in range(args.batch_size)]).to(args.device)
+    total_log_policy_s_a= torch.zeros(args.batch_size).to(args.device)
+    total_log_pb_trajectories = torch.zeros(args.batch_size).to(args.device)
+
+    for i in range(args.n // args.k):
+        pos_mask = batch != 2 ** args.k
+        all_logits = model(batch.T)
+        pos_logits, word_logits, sum_logits = process_logits(all_logits, pos_mask, args)
+
+        with torch.no_grad():
+            _, _, sum_uniform = process_logits(0.0 * all_logits.clone(), pos_mask, args)
+
+            actions, positions, words = sample_forward(sum_logits, sum_uniform, batch, args)
+
+            batch_cl = batch.clone()
+            batch_cl[range(args.batch_size), positions] = words
+            batch = batch_cl
+
+        log_policy_s_a = sum_logits[range(args.batch_size), actions] - torch.logsumexp(sum_logits, dim=-1)
+
+        total_log_policy_s_a += log_policy_s_a
+
+        log_pb_trajectory = torch.log(torch.tensor(1 / (i + 1))).to(args.device)
+        
+        total_log_pb_trajectories += log_pb_trajectory
+ 
+        
+    log_rewards = args.reward_exponent * batch_log_rewards(batch[:, 1:], M, args.k).to(args.device).detach()
+    loss = (V_sum + args.entropy_coeff * total_log_policy_s_a - total_log_pb_trajectories - log_rewards).pow(2).mean() 
+    loss.backward()
+    optimizer.step()
+    V_optimizer.step()
+
+    assert batch[:, 1:].max() < 2 ** args.k
+    return loss.cpu().item(), batch[:, 1:].cpu()
+    
+    
+
 
 def compute_correlation(model, M, test_set, args, rounds=10, batch_size=180):
     # Sampling a trajectory from PB(tau | x) when PB is uniform over parents 
@@ -471,7 +600,10 @@ def compute_correlation(model, M, test_set, args, rounds=10, batch_size=180):
             for i in range(args.n // args.k):
                 with torch.no_grad():
                     pos_mask = batch != 2 ** args.k
-                    all_logits = model(batch.T, args.entropy_coeff)
+                    if args.objective == "lambda_dqn":
+                        all_logits = model(batch.T, args.entropy_coeff)
+                    else:
+                        all_logits = model(batch.T)
                     pos_logits, word_logits, sum_logits = process_logits(all_logits, pos_mask, args)
 
                     # There is a bug in pytorch that allows to sample objects that has 0 probability (happens very rarely but still happens).
@@ -521,7 +653,7 @@ def main(args):
     if args.objective  == "lambda_dqn":
         model = TransformerModel_Lambda(ntoken=2**args.k+2, d_model=64, d_hid=64, nhead=8, nlayers=3, 
                                         seq_len=args.n//args.k, dropout=args.dropout).to(device)    
-    if args.objective == "softdqn" or args.objective == "learnable_dqn":
+    if args.objective == "softdqn" or args.objective == "learnable_dqn" or args.objective == "pcl_dqn":
         target_model = TransformerModel(ntoken=2**args.k+2, d_model=64, d_hid=64, nhead=8, nlayers=3, 
                                         seq_len=args.n//args.k, dropout=args.dropout).to(device)
         target_model.load_state_dict(model.state_dict())
@@ -531,9 +663,11 @@ def main(args):
         target_model.load_state_dict(model.state_dict())
 
     log_Z = nn.Parameter(torch.tensor(np.ones(64) * 0.0 / 64, requires_grad=True, device=device))
+    V = nn.Parameter(torch.tensor(np.zeros(64) / 64, requires_grad=True, device=device))
     
     optimizer = torch.optim.Adam(model.parameters(), args.learning_rate, weight_decay=1e-5)
     Z_optimizer = torch.optim.Adam([log_Z], args.z_learning_rate, weight_decay=1e-5)
+    V_optimizer = torch.optim.Adam([V], args.v_learning_rate, weight_decay=1e-5)
 
     rb =  TensorDictReplayBuffer(
         storage=LazyTensorStorage(args.rb_size),
@@ -583,17 +717,22 @@ def main(args):
             loss, batch = DB_train_step(model, optimizer, M, args)
         elif args.objective == "subtb":
             loss, batch = SubTB_train_step(model, optimizer, M, args)
-        elif args.objective == "softdqn" or args.objective == "lambda_dqn" or args.objective == "learnable_dqn":
+        elif args.objective == "softdqn" or args.objective == "lambda_dqn" or args.objective == "learnable_dqn" or args.objective == "pcl_dqn":
             # First, collect experiences for experience replay
             batch = SoftDQN_collect_experience(rb, model, target_model, M, args)
             # Next, sample transitions from the buffer and calculate the loss
             if it > args.start_learning:
-                loss = SoftDQN_learn_rb(progress, rb, model, target_model, optimizer, M, args)
+                if args.objective == "pcl_dqn":
+                    loss = PCL_DQN_learn_rb(progress, rb, model, target_model, optimizer, M, args)
+                else:
+                    loss = SoftDQN_learn_rb(progress, rb, model, target_model, optimizer, M, args)
             else:
                 loss = 0.0
 
             if it % args.update_target_every == 0:
                 target_model.load_state_dict(model.state_dict())
+        elif args.objective == "pcl_ms_dqn":
+            loss, batch = PCL_MS_DQN_train_step(model, V, optimizer, V_optimizer, M, args)
         
         avg_reward += (batch_rewards(batch, M, args.k) ** args.reward_exponent).sum().item() / args.batch_size
 
@@ -621,6 +760,19 @@ def main(args):
             sp_corr = compute_correlation(model, M, test_set, args, rounds=args.corr_num_rounds)
             print(f"test set reward correlation: {sp_corr}")
             corr_nums.append(sp_corr.statistic)
+
+            ## set name of file to be experiment name
+            if args.objective in ["lambda_dqn"]:
+                args.output_file = f"{args.objective}_{args.lambda_dist}_{args.seed}.txt"
+            elif args.objective in ['softdqn'] and args.m_alpha > 0:
+                args.output_file = f"{args.objective}_munchausen_{args.seed}.txt"
+            else:
+                args.output_file = f"{args.objective}_{args.seed}.txt"
+
+            ## write to txt file both mode and correlation numbers
+            with open(args.output_file, 'a') as f:
+                f.write(f"{sum(modes)}\t{sp_corr.statistic}\t{it}\n")
+
 
 if __name__ == '__main__':
     args = parser.parse_args()

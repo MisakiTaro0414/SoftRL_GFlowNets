@@ -8,7 +8,7 @@ def get_config(seed : str):
             'device': 'cuda:7',
             'validation_interval': 100,
             'validation_samples': 200000,
-            'wandb_project': 'Urek Ayhan',    # if empty, do not use wandb
+            'wandb_project': '',    # if empty, do not use wandb
             'n_envs': 16,
             'n_trajectories': 1000000
         }
